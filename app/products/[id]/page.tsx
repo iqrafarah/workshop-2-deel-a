@@ -1,8 +1,7 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import ProductImage from '@/app/components/ProductImage';
 import { getVisibleProduct } from '@/lib/products';
-import { formatPrice } from '@/lib/format-price';
 
 export default async function ProductDetailPage({
   params,
@@ -16,22 +15,15 @@ export default async function ProductDetailPage({
     notFound();
   }
 
-  const hasProductImage = Boolean(product.image_url);
-  const imageSource = product.image_url ?? '/images/product-placeholder.png';
-  const imageAlt = hasProductImage
-    ? product.title
-    : `Geen afbeelding beschikbaar voor ${product.title}`;
-
   return (
     <main className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-2 lg:px-8">
       <div className="relative min-h-96 rounded-2xl border border-gray-200 bg-white">
-        <Image
-          src={imageSource}
-          alt={imageAlt}
-          fill
+        <ProductImage
+          src={product.image_url}
+          productTitle={product.title}
           sizes="(min-width: 768px) 50vw, 100vw"
           className="object-contain p-10"
-          priority
+          preload
         />
       </div>
 
@@ -45,7 +37,7 @@ export default async function ProductDetailPage({
           {product.title}
         </h1>
         <p className="mt-5 text-3xl font-bold">
-          {formatPrice(product.price)}
+          € {Number(product.price).toFixed(2)}
         </p>
         {product.description && (
           <p className="mt-6 leading-7 text-gray-600">{product.description}</p>
