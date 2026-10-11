@@ -1,86 +1,79 @@
-import Image from "next/image";
+import Image from 'next/image';
+import Link from 'next/link';
+import type { FakeStoreProduct } from '@/types/product';
 
-const products = [
-  {
-    id: 1,
-    title: "ACME Starterbox",
-    category: "Starterspakket",
-    description:
-      "Een praktische selectie van producten voor een vliegende start.",
-    price: 39.95,
-  },
-  {
-    id: 2,
-    title: "ACME Opbergbox",
-    category: "Organisatie",
-    description:
-      "Een stevige en overzichtelijke oplossing voor spullen die je graag bij elkaar houdt.",
-    price: 29.95,
-  },
-  {
-    id: 3,
-    title: "ACME Geschenkbox",
-    category: "Cadeau",
-    description:
-      "Een zorgvuldig samengesteld pakket om iemand mee te verrassen.",
-    price: 49.95,
-  },
-];
+async function getProducts(): Promise<FakeStoreProduct[]> {
+  const response = await fetch('https://fakestoreapi.com/products');
 
-export default function ProductsPage() {
+  if (!response.ok) {
+    throw new Error('De producten konden niet worden opgehaald.');
+  }
+
+  return response.json();
+}
+
+export default async function ProductsPage() {
+  const products = await getProducts();
+
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-      <header className="mb-10">
-        <p className="text-sm font-semibold uppercase tracking-wider text-indigo-600">
-          ACME Webshop
-        </p>
-        <h1 className="mt-2 text-4xl font-bold tracking-tight text-gray-900">
-          Producten
-        </h1>
-        <p className="mt-3 max-w-2xl text-gray-600">
-          Bekijk een eerste selectie uit het productaanbod van ACME. In de
-          volgende workshop vervangen we deze tijdelijke producten door echte
-          gegevens uit een API.
-        </p>
-      </header>
+    <main className="mx-auto w-full max-w-7xl px-4 py-12">
+      <div className="mb-10">
+        <h1 className="text-3xl font-bold text-gray-900">Producten</h1>
+        <p className="mt-2 text-gray-600">Bekijk ons complete assortiment.</p>
+      </div>
 
-      <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((product) => (
-          <article
+          <Link
             key={product.id}
-            className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+            href={`/products/${product.id}`}
+            className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           >
-            <div className="relative aspect-4/3 bg-white">
+            <div className="relative aspect-square bg-gray-50">
               <Image
-                src="/images/product-placeholder.png"
-                alt={`Tijdelijke productafbeelding voor ${product.title}`}
+                src={product.image}
+                alt={product.title}
                 fill
-                sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-                className="object-contain p-6"
+                sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                className="object-contain p-8 transition duration-300 group-hover:scale-105"
               />
             </div>
+
             <div className="flex flex-1 flex-col p-6">
-              <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
+              <p className="text-sm font-semibold uppercase tracking-wide text-indigo-600">
                 {product.category}
               </p>
-              <h2 className="mt-2 text-xl font-semibold text-gray-900">
+              <h2 className="mt-2 line-clamp-2 text-xl font-bold text-gray-900">
                 {product.title}
               </h2>
-              <p className="mt-3 flex-1 leading-7 text-gray-600">
+              <p className="mt-3 line-clamp-3 text-sm leading-6 text-gray-600">
                 {product.description}
               </p>
-              <div className="mt-5 flex items-center justify-between gap-4">
-                <p className="text-xl font-bold text-gray-900">
-                  € {product.price.toFixed(2).replace(".", ",")}
-                </p>
-                <span className="rounded-full bg-indigo-50 px-3 py-1 text-sm font-medium text-indigo-700">
-                  Binnenkort
+
+              <div className="mt-auto pt-6">
+                <div className="flex items-end justify-between gap-4">
+                  <p className="text-2xl font-bold text-gray-900">
+                    € {product.price.toFixed(2)}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    ★ {product.rating.rate}
+                  </p>
+                </div>
+
+                <span className="mt-5 flex w-full items-center justify-center rounded-lg bg-indigo-600 px-4 py-3 font-semibold text-white transition group-hover:bg-indigo-700">
+                  Bekijk product
+                  <span
+                    aria-hidden="true"
+                    className="ml-2 transition-transform group-hover:translate-x-1"
+                  >
+                    →
+                  </span>
                 </span>
               </div>
             </div>
-          </article>
+          </Link>
         ))}
-      </section>
+      </div>
     </main>
   );
 }
