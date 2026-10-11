@@ -26,7 +26,7 @@ export default async function ProductsPage() {
             const hasProductImage = Boolean(product.image_url);
 
             const imageSource =
-              product.image_url ?? '/images/product-placeholder.jpg';
+              product.image_url ?? '/images/product-placeholder.png';
 
             const imageAlt = hasProductImage
               ? product.title
