@@ -1,6 +1,7 @@
 'use server';
 
-import { createAdminClient } from '@/lib/supabase-admin';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { requireAuth } from '@/lib/supabase/auth';
 import type { Product } from '@/types/product';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -48,40 +49,56 @@ function readForm(formData: FormData) {
 }
 
 export async function getAllProducts(): Promise<Product[]> {
-  const { data, error } = await createAdminClient()
+  await requireAuth();
+  const supabase = await createServerSupabaseClient();
+
+  const { data, error } = await supabase
     .from('products')
     .select('*')
     .order('created_at', { ascending: false });
+
   if (error) throw new Error(error.message);
   return data ?? [];
 }
 
 export async function getAdminProduct(id: number): Promise<Product | null> {
-  const { data, error } = await createAdminClient()
+  await requireAuth();
+  const supabase = await createServerSupabaseClient();
+
+  const { data, error } = await supabase
     .from('products')
     .select('*')
     .eq('id', id)
     .maybeSingle();
+
   if (error) throw new Error(error.message);
   return data;
 }
 
 export async function createProduct(formData: FormData) {
-  const { error } = await createAdminClient()
-    .from('products')
-    .insert(readForm(formData));
+  await requireAuth();
+  const supabase = await createServerSupabaseClient();
+
+  const { error } = await supabase.from('products').insert(readForm(formData));
+
   if (error) throw new Error(error.message);
+
   revalidatePath('/products');
   revalidatePath('/admin');
   redirect('/admin');
 }
 
 export async function updateProduct(id: number, formData: FormData) {
-  const { error } = await createAdminClient()
+  await requireAuth();
+  const supabase = await createServerSupabaseClient();
+
+  const { error } = await supabase
     .from('products')
     .update(readForm(formData))
     .eq('id', id);
+
   if (error) throw new Error(error.message);
+
   revalidatePath('/products');
   revalidatePath(`/products/${id}`);
   revalidatePath('/admin');
@@ -89,22 +106,29 @@ export async function updateProduct(id: number, formData: FormData) {
 }
 
 export async function toggleVisibility(id: number, hidden: boolean) {
-  const { error } = await createAdminClient()
+  await requireAuth();
+  const supabase = await createServerSupabaseClient();
+
+  const { error } = await supabase
     .from('products')
     .update({ is_hidden: !hidden })
     .eq('id', id);
+
   if (error) throw new Error(error.message);
+
   revalidatePath('/products');
   revalidatePath(`/products/${id}`);
   revalidatePath('/admin');
 }
 
 export async function deleteProduct(id: number) {
-  const { error } = await createAdminClient()
-    .from('products')
-    .delete()
-    .eq('id', id);
+  await requireAuth();
+  const supabase = await createServerSupabaseClient();
+
+  const { error } = await supabase.from('products').delete().eq('id', id);
+
   if (error) throw new Error(error.message);
+
   revalidatePath('/products');
   revalidatePath('/admin');
 }
