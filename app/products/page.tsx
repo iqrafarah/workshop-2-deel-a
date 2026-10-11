@@ -1,19 +1,26 @@
-import Image from 'next/image';
+import ProductCard from '@/app/components/ProductCard';
 import Link from 'next/link';
-import type { FakeStoreProduct } from '@/types/product';
+import { getVisibleProducts } from '@/lib/products';
 
-async function getProducts(): Promise<FakeStoreProduct[]> {
-  const response = await fetch('https://fakestoreapi.com/products');
+type Props = {
+  searchParams: Promise<{ q?: string | string[]; category?: string | string[] }>;
+};
 
-  if (!response.ok) {
-    throw new Error('De producten konden niet worden opgehaald.');
-  }
-
-  return response.json();
-}
-
-export default async function ProductsPage() {
-  const products = await getProducts();
+export default async function ProductsPage({ searchParams }: Props) {
+  const filters = await searchParams;
+  const query = typeof filters.q === 'string' ? filters.q.trim() : '';
+  const category = typeof filters.category === 'string' ? filters.category : '';
+  const products = await getVisibleProducts();
+  const categories = [...new Set(products.flatMap((product) =>
+    product.category ? [product.category] : [],
+  ))].sort((a, b) => a.localeCompare(b, 'nl'));
+  const searchTerm = query.toLocaleLowerCase('nl-NL');
+  const filteredProducts = products.filter((product) => {
+    const matchesCategory = !category || product.category === category;
+    const searchText = `${product.title} ${product.description ?? ''}`
+      .toLocaleLowerCase('nl-NL');
+    return matchesCategory && searchText.includes(searchTerm);
+  });
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-12">
@@ -22,58 +29,76 @@ export default async function ProductsPage() {
         <p className="mt-2 text-gray-600">Bekijk ons complete assortiment.</p>
       </div>
 
-      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-        {products.map((product) => (
-          <Link
-            key={product.id}
-            href={`/products/${product.id}`}
-            className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      <form
+        action="/products"
+        method="get"
+        className="mb-8 flex flex-wrap items-end gap-4"
+      >
+        <div className="min-w-0 flex-1 basis-64">
+          <label htmlFor="product-search" className="block font-medium">
+            Zoek producten
+          </label>
+          <input
+            id="product-search"
+            name="q"
+            type="search"
+            defaultValue={query}
+            placeholder="Zoek op titel of beschrijving"
+            className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:outline-2 focus:outline-indigo-600"
+          />
+        </div>
+        <div>
+          <label htmlFor="product-category" className="block font-medium">
+            Categorie
+          </label>
+          <select
+            id="product-category"
+            name="category"
+            defaultValue={category}
+            className="mt-2 max-w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:outline-2 focus:outline-indigo-600"
           >
-            <div className="relative aspect-square bg-gray-50">
-              <Image
-                src={product.image}
-                alt={product.title}
-                fill
-                sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                className="object-contain p-8 transition duration-300 group-hover:scale-105"
-              />
-            </div>
+            <option value="">Alle categorieën</option>
+            {category && !categories.includes(category) && (
+              <option value={category}>{category}</option>
+            )}
+            {categories.map((name) => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
+        </div>
+        <button
+          type="submit"
+          className="rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700 focus:outline-2 focus:outline-offset-2 focus:outline-indigo-600"
+        >
+          Filteren
+        </button>
+        <Link href="/products" className="rounded-lg border px-4 py-2">
+          Filters wissen
+        </Link>
+      </form>
 
-            <div className="flex flex-1 flex-col p-6">
-              <p className="text-sm font-semibold uppercase tracking-wide text-indigo-600">
-                {product.category}
-              </p>
-              <h2 className="mt-2 line-clamp-2 text-xl font-bold text-gray-900">
-                {product.title}
-              </h2>
-              <p className="mt-3 line-clamp-3 text-sm leading-6 text-gray-600">
-                {product.description}
-              </p>
+      {products.length === 0 ? (
+        <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center">
+          <h2 className="text-xl font-semibold">Er zijn nog geen producten</h2>
 
-              <div className="mt-auto pt-6">
-                <div className="flex items-end justify-between gap-4">
-                  <p className="text-2xl font-bold text-gray-900">
-                    € {product.price.toFixed(2)}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    ★ {product.rating.rate}
-                  </p>
-                </div>
-
-                <span className="mt-5 flex w-full items-center justify-center rounded-lg bg-indigo-600 px-4 py-3 font-semibold text-white transition group-hover:bg-indigo-700">
-                  Bekijk product
-                  <span
-                    aria-hidden="true"
-                    className="ml-2 transition-transform group-hover:translate-x-1"
-                  >
-                    →
-                  </span>
-                </span>
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div>
+          <p className="mt-2 text-gray-600">
+            Voeg via het beheergedeelte een product toe.
+          </p>
+        </div>
+      ) : filteredProducts.length === 0 ? (
+        <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center">
+          <h2 className="text-xl font-semibold">Geen producten gevonden</h2>
+          <p className="mt-2 text-gray-600">
+            Probeer een andere zoekterm of wis de filters.
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredProducts.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
     </main>
   );
 }
