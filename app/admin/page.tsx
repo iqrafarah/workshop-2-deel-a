@@ -1,6 +1,7 @@
 import { FaEye, FaEyeSlash, FaPen } from 'react-icons/fa';
 import Link from 'next/link';
 import DeleteButton from '@/app/admin/DeleteButton';
+import { formatPrice } from '@/lib/format-price';
 import {
   deleteProduct,
   getAllProducts,
@@ -42,7 +43,7 @@ export default async function AdminPage() {
                 </td>
 
                 <td className="whitespace-nowrap px-4 text-right">
-                  € {Number(product.price).toFixed(2)}
+                  {formatPrice(product.price)}
                 </td>
 
                 <td>{product.is_hidden ? 'Verborgen' : 'Zichtbaar'}</td>

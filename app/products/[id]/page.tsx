@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getVisibleProduct } from '@/lib/products';
+import { formatPrice } from '@/lib/format-price';
 
 export default async function ProductDetailPage({
   params,
@@ -44,7 +45,7 @@ export default async function ProductDetailPage({
           {product.title}
         </h1>
         <p className="mt-5 text-3xl font-bold">
-          € {Number(product.price).toFixed(2)}
+          {formatPrice(product.price)}
         </p>
         {product.description && (
           <p className="mt-6 leading-7 text-gray-600">{product.description}</p>
